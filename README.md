@@ -6,9 +6,9 @@ Projeto de Ray Tracing da disciplina de Processamento Gráfico do Centro de Info
 
 Alunos: 
 - Mihael Guedes
-- Matheus Aragão
 - David Ubaldo
 - Natan Frederico
 - Tomás Nascimento
+- João Victor
 
 Disciplina: Processamento Gráfico
