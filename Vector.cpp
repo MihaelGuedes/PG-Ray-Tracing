@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <exception>
 #include <cmath>
@@ -85,9 +86,9 @@ public:
 
     // Haddamard product (component-wise)
     Vector operator*(const Vector& other) const {
-        Vector result(*this);
+        Vector result(dimension);
         for (int i = 0; i < dimension; i++) {
-            result.components[i] *= other.components[i];
+            result.components[i] = components[i] * other.components[i];
         }
         return result;
     }
@@ -98,16 +99,10 @@ public:
         }
         return is;
     }
-
-    // friend std::ostream& operator<< (std::ostream& os, Vector& v) {
-    //     for (int i = 0; i < v.dimension; i++) {
-    //         os << v[i] << ' ';
-    //     }
-    //     return os;
-    // }
     
     std::string debug () const {
         std::stringstream ss;
+        ss << std::setprecision(2) << std::fixed;
         for (int i = 0; i < dimension; i++) {
             ss << components[i] << ' ';
         }
