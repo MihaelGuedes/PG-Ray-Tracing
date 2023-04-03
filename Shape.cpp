@@ -1,7 +1,6 @@
 #include "Matrix.cpp"
 
 const double EPSILON = 1e-9;
-int sgn (double t) { return abs(t) < EPSILON ? 0 : (t > 0) - (t < 0); }
 
 struct Ray {
     Vector origin, direction;
@@ -49,7 +48,7 @@ struct Sphere : public Shape {
         double tca = dot(v, ray.direction);
         double d2 = dot(v, v) - tca*tca;
         double r2 = radius*radius;
-        if (sgn(d2 - r2) > 0) {
+        if (d2 - r2 > EPSILON) {
             return false;
         }
         double thc = std::sqrt(r2 - d2);
@@ -93,18 +92,21 @@ struct Plane : public Shape {
         }
     }
 
+    void applyMatrix (const Matrix& m) {
+        sample = affineTransformation(m, sample, true);
+        n = affineTransformation(m, n, false);
+    }
+
     Vector normal(const Vector& p) {
         return n;
     }
 };
 
-struct Triangle : public Shape {
-    Plane pi;
+struct Triangle : public Plane {
     Vector hb, hc;
 
     Triangle(const Vector &color, const Vector &a, const Vector &b, const Vector& c) :
-        Shape(color),
-        pi(color, a, unit(cross(b - a, c - a)))
+        Plane(color, a, unit(cross(b - a, c - a)))
     {
         Vector u = b - a, v = c - a;
         Vector projuv = v*(dot(u, v)/dot(v, v));
@@ -116,11 +118,11 @@ struct Triangle : public Shape {
     }
 
     bool intersect(const Ray& ray, double& t) {
-        if (!pi.intersect(ray, t)) {
+        if (!Plane::intersect(ray, t)) {
             return false;
         }
         Vector p = ray.at(t);
-        Vector v = p - pi.sample;
+        Vector v = p - sample;
         double beta = dot(v, hb), gamma = dot(v, hc), alpha = 1 - (gamma + beta);
         if (alpha < -EPSILON || beta < -EPSILON || gamma < -EPSILON) {
             return false;
@@ -128,7 +130,9 @@ struct Triangle : public Shape {
         return true;
     }
 
-    Vector normal(const Vector &p) {
-        return pi.n;
+    void applyMatrix (const Matrix& m) {
+        Plane::applyMatrix(m);
+        hb = affineTransformation(m, hb, false);
+        hc = affineTransformation(m, hc, false);
     }
 };
