@@ -1,44 +1,13 @@
-#include "Matrix.cpp"
+#include "Render.cpp"
 
 const double EPSILON = 1e-9;
-
-struct Ray {
-    Vector origin, direction;
-    
-    Ray (const Vector& origin, const Vector& direction) :
-        origin(origin),
-        direction(direction)
-    {}
-
-    Vector at (double t) const {
-        return origin + direction*t;
-    }
-};
-
-struct Shape {
-    Vector color;
-
-    Shape(const Vector& color) : color(color) {}
-
-    virtual bool intersect (const Ray& ray, double& t) {
-        return {};
-    }
-
-    virtual void applyMatrix (const Matrix& m) {
-        return;
-    }
-
-    virtual Vector normal (const Vector& p) {
-        return {};
-    }
-};
 
 struct Sphere : public Shape {
     Vector center;
     double radius;
 
-    Sphere (const Vector& color, const Vector& center, double radius) :
-        Shape(color),
+    Sphere (const Vector &cd, double ka, double kd, double ks, int eta, const Vector& center, double radius) :
+        Shape(cd, ka, kd, ks, eta),
         center(center),
         radius(radius)
     {}
@@ -76,8 +45,8 @@ struct Plane : public Shape {
     Vector sample;
     Vector n;
 
-    Plane (const Vector& color, const Vector& sample, const Vector& normal) :
-        Shape(color),
+    Plane (const Vector &cd, double ka, double kd, double ks, int eta, const Vector& sample, const Vector& normal) :
+        Shape(cd, ka, kd, ks, eta),
         sample(sample),
         n(unit(normal))
     {}
@@ -105,8 +74,8 @@ struct Plane : public Shape {
 struct Triangle : public Plane {
     Vector hb, hc;
 
-    Triangle(const Vector &color, const Vector &a, const Vector &b, const Vector& c) :
-        Plane(color, a, unit(cross(b - a, c - a)))
+    Triangle(const Vector &cd, double ka, double kd, double ks, int eta, const Vector &a, const Vector &b, const Vector& c) :
+        Plane(cd, ka, kd, ks, eta, a, unit(cross(b - a, c - a)))
     {
         Vector u = b - a, v = c - a;
         Vector projuv = v*(dot(u, v)/dot(v, v));
