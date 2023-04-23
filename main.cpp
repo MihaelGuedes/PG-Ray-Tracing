@@ -1,73 +1,10 @@
-#include <bits/stdc++.h>
-#include "Shape.cpp"
+#include "Camera.cpp"
+
+extern Vector ambient_light;
+extern std::vector<Light> lights;
+extern std::vector<Shape*> shapes;
 
 using namespace std;
-
-vector<Shape*> shapes;
-
-Shape* nearest (const Ray& ray, double& t_min) {
-    Shape* hit = nullptr;
-    for (Shape* shape : shapes) {
-        double t;
-        if (shape->intersect(ray, t) && (!hit || t < t_min)) {
-            t_min = t;
-            hit = shape;
-        }
-    }
-    return hit;
-}
-
-Vector ray_cast (const Ray& ray) {
-    double t_min = numeric_limits<double>::max();
-    Shape* hit = nearest(ray, t_min);
-    if (hit) {
-        return hit->color;
-    } else {
-        return Vector(3);
-    }
-}
-
-std::ostream& operator<< (std::ostream& os, Vector& v) {
-    for (int i = 0; i < v.size(); i++) {
-        os << (char)v[i];
-    }
-    return os;
-}
-
-const double square_side = 0.1;
-
-class Camera {
-    Vector eye;
-    Vector u, v, w;
-
-public:
-    Camera (Vector& eye, Vector& target, Vector& up) : eye(eye) {
-        w = unit(eye - target);
-        u = unit(cross(up, w));
-        v = cross(w, u);
-    }
-
-    void render (double d, int vres, int hres) {
-        Vector topleft = eye - w*d + (v*(vres - 1) - u*(hres - 1))*square_side/2.0;
-        std::cout << "P6" << std::endl;
-        std::cout << hres << ' ' << vres << std::endl;
-        std::cout << 255 << std::endl;
-        for (int i = 0; i < vres; i++) {
-            for (int j = 0; j < hres; j++) {
-                Vector pixelCenter = topleft + (u*j - v*i)*square_side;
-                Vector pixelColor = ray_cast(Ray(eye, unit(pixelCenter - eye)));
-                std::cout << pixelColor;
-            }
-        }
-    }
-
-    void applyMatrix (const Matrix& m) {
-        eye = affineTransformation(m, eye, true);
-        u = affineTransformation(m, u, false);
-        v = affineTransformation(m, v, false);
-        w = affineTransformation(m, w, false);
-    }
-};
 
 int main() {
     Camera* camera = nullptr;
@@ -85,14 +22,20 @@ int main() {
             case 's': {
                 Vector o(3), c(3);
                 double r;
-                cin >> c >> r >> o;
-                shapes.push_back(new Sphere(o, c, r));
+                double kd, ks, ka;
+                int p;
+                cin >> c >> r >> o >> kd >> ks >> ka >> p;
+                o = o/255.0;
+                shapes.push_back(new Sphere(o, ka, kd, ks, p, c, r));
                 //shapes.back()->applyMatrix(translate({150.0, 0.0, 0.0}));
             } break;
             case 'p': {
                 Vector p0(3), n(3), o(3);
-                cin >> p0 >> n >> o;
-                shapes.push_back(new Plane(o, p0, n));
+                double kd, ks, ka;
+                int p;
+                cin >> p0 >> n >> o >> kd >> ks >> ka >> p;
+                o = o/255.0;
+                shapes.push_back(new Plane(o, ka, kd, ks, p, p0, n));
                 //shapes.back()->applyMatrix(rotateX(30.0, true));
             } break;
             case 't': {
@@ -114,13 +57,26 @@ int main() {
                     faces.emplace_back(i, j, k);
                 }
                 Vector o(3);
-                cin >> o;
+                double kd, ks, ka;
+                int p;
+                cin >> o >> kd >> ks >> ka >> p;
+                o = o/255.0;
                 for (auto [i, j, k] : faces) {
-                    shapes.push_back(new Triangle(o, vertices[i], vertices[j], vertices[k]));
+                    shapes.push_back(new Triangle(o, ka, kd, ks, p, vertices[i], vertices[j], vertices[k]));
                     //shapes.back()->applyMatrix(rotateX(40.0, true));
                 }
                 break;
             }
+            case 'l': {
+                Light light;
+                cin >> light.position >> light.intensity;
+                light.intensity = light.intensity/255.0;
+                lights.push_back(light);
+            } break;
+            case 'a': {
+                cin >> ambient_light;
+                ambient_light = ambient_light/255.0;
+            } break;
         }
         type = -1;
     }
