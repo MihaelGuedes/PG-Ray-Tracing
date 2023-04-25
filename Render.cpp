@@ -6,17 +6,37 @@ class Material {
     Vector cd;
     double ka, kd, ks;
     int eta;
+    double ior;
 
 public:
-    Material (Shape* shape, const Vector& cd, double kd, double ks, double ka, int eta) :
-        shape(shape), cd(cd), kd(kd), ks(ks), ka(ka), eta(eta)
+
+    double kr, kt;
+
+    Material (Shape* shape, const Vector& cd, double kd, double ks, double ka, double kr, double kt, int eta, double ior) :
+        shape(shape), cd(cd), kd(kd), ks(ks), ka(ka), kr(kr), kt(kt), eta(eta), ior(ior)
     {}
 
     Shape* getShape () {
         return shape;
     }
 
-    Vector shade (const Vector &p, const Vector &v);
+    Vector shade (const Vector &p, const Vector &v, const Vector& n);
+
+    Vector refract (const Vector& v, const Vector& n) {
+        double d = dot(n, v);
+        Vector n2 = n;
+        double ior2 = ior; 
+        if (d < 0.0) {
+            n2 = n2*-1;
+            ior2 = 1.0/ior2;
+            d *= -1;
+        }
+        double delta = 1.0 - (1.0 - d*d)/(ior2*ior2);
+        if (delta < 0.0) {
+            throw -1;
+        }
+        return v/(-ior2) - n2*(sqrt(delta) - d/ior2);
+    }
 };
 
 std::vector<Material> objects;
@@ -33,15 +53,31 @@ Material* nearest (const Ray& ray, double& t_min) {
     return hit;
 }
 
-Vector ray_cast (const Ray& ray) {
+Vector ray_trace (const Ray &ray, int ttl) {
+    Vector color(3);
     double t_min;
-    Material* hit = nearest(ray, t_min);
-    if (hit) {
+    Material* object = nearest(ray, t_min);
+    if (object) {
         Vector p = ray.at(t_min);
-        return hit->shade(p, ray.direction*-1);
-    } else {
-        return Vector(3);
+        Vector v = ray.direction*-1;
+        Vector n = object->getShape()->normal(p);
+        color = object->shade(p, v, n);
+        if (ttl > 0) {
+            Ray reflected(p, n*(2.0*dot(n, v)) - v);
+            try {
+                if (object->kt > 0.0) {
+                    Ray refracted(p, object->refract(v, n));
+                    color = color + ray_trace(refracted, ttl - 1)*object->kt;
+                }
+                if (object->kr > 0.0) {
+                    color = color + ray_trace(reflected, ttl - 1)*object->kr;
+                }
+            } catch (int e) {
+                color = color + ray_trace(reflected, ttl - 1);
+            }
+        }
     }
+    return color;
 }
 
 struct Light {
@@ -52,8 +88,7 @@ struct Light {
 Vector ambient_light(3);
 std::vector<Light> lights;
 
-Vector Material::shade (const Vector &p, const Vector &v) {
-    Vector n = shape->normal(p);
+Vector Material::shade (const Vector &p, const Vector &v, const Vector& n) {
     Vector cp = cd*ambient_light*ka;
     for (Light light : lights) {
         Vector l = unit(light.position - p), r = n*2.0*(dot(n, l)) - l;

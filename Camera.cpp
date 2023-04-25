@@ -13,7 +13,7 @@ std::ostream& operator<< (std::ostream& os, Vector& v) {
     return os;
 }
 
-const double square_side = 0.1;
+const double square_side = 0.5;
 
 class Camera {
     Vector eye;
@@ -26,18 +26,15 @@ public:
         v = cross(w, u);
     }
 
-    void render (double d, int vres, int hres) {
+    void render (double d, int vres, int hres, int max_depth) {
         Vector topleft = eye - w*d + (v*(vres - 1) - u*(hres - 1))*square_side/2.0;
         std::cout << "P6" << std::endl;
         std::cout << hres << ' ' << vres << std::endl;
         std::cout << 255 << std::endl;
         for (int i = 0; i < vres; i++) {
             for (int j = 0; j < hres; j++) {
-                if (i == 240 && j == 320) {
-                    int gggg = 34;
-                }
                 Vector pixelCenter = topleft + (u*j - v*i)*square_side;
-                Vector pixelColor = ray_cast(Ray(eye, unit(pixelCenter - eye)));
+                Vector pixelColor = ray_trace(Ray(eye, unit(pixelCenter - eye)), max_depth);
                 std::cout << pixelColor;
             }
         }

@@ -10,33 +10,32 @@ int main() {
     Camera* camera = nullptr;
     int vres, hres;
     double d;
+    int max_depth;
     while (cin) {
         char type;
         cin >> type;
         switch (type) {
             case 'c': {
                 Vector up(3), c(3), m(3);
-                cin >> hres >> vres >> d >> up >> c >> m;
+                cin >> hres >> vres >> d >> up >> c >> m >> max_depth;
                 camera = new Camera(c, m, up);
             } break;
             case 's': {
                 Vector o(3), c(3);
                 double r;
-                double kd, ks, ka;
+                double kd, ks, ka, kr, kt, ior;
                 int p;
-                cin >> c >> r >> o >> kd >> ks >> ka >> p;
+                cin >> c >> r >> o >> kd >> ks >> ka >> kr >> kt >> p >> ior;
                 o = o/255.0;
-                objects.emplace_back(new Sphere(c, r), o, kd, ks, ka, p);
-                //shapes.back()->applyMatrix(translate({150.0, 0.0, 0.0}));
+                objects.emplace_back(new Sphere(c, r), o, kd, ks, ka, kr, kt, p, ior);
             } break;
             case 'p': {
                 Vector p0(3), n(3), o(3);
-                double kd, ks, ka;
+                double kd, ks, ka, kr, kt, ior;
                 int p;
-                cin >> p0 >> n >> o >> kd >> ks >> ka >> p;
+                cin >> p0 >> n >> o >> kd >> ks >> ka >> kr >> kt >> p >> ior;
                 o = o/255.0;
-                objects.emplace_back(new Plane(p0, n), o, kd, ks, ka, p);
-                //shapes.back()->applyMatrix(rotateX(30.0, true));
+                objects.emplace_back(new Plane(p0, n), o, kd, ks, ka, kr, kt, p, ior);
             } break;
             case 't': {
                 int numFaces, numVertices;
@@ -57,13 +56,14 @@ int main() {
                     faces.emplace_back(i, j, k);
                 }
                 Vector o(3);
-                double kd, ks, ka;
+                double kd, ks, ka, kr, kt, ior;
                 int p;
-                cin >> o >> kd >> ks >> ka >> p;
+                cin >> o >> kd >> ks >> ka >> kr >> kt >> p >> ior;
                 o = o/255.0;
                 for (auto [i, j, k] : faces) {
-                    objects.emplace_back(new Triangle(vertices[i], vertices[j], vertices[k]), o, kd, ks, ka, p);
-                    //shapes.back()->applyMatrix(rotateX(40.0, true));
+                    objects.emplace_back(new Triangle(vertices[i], vertices[j], vertices[k]), o, kd, ks, ka, kr, kt, p, ior);
+                    objects.back().getShape()->applyMatrix(rotateZ(15, false));
+                    objects.back().getShape()->applyMatrix(translate({200.0, 400.0, 50.0}));
                 }
                 break;
             }
@@ -80,6 +80,8 @@ int main() {
         }
         type = -1;
     }
-    //camera->applyMatrix(rotateZ(30, false));
-    camera->render(d, vres, hres);
+    camera->applyMatrix(rotateZ(45, false));
+    camera->applyMatrix(rotateX(20, true));
+    camera->applyMatrix(rotateZ(45, true));
+    camera->render(d, vres, hres, max_depth);
 }
