@@ -1,18 +1,48 @@
-#include "Matrix.cpp"
+#include "Shape.cpp"
 #include <vector>
 
-struct Ray {
-    Vector origin, direction;
-    
-    Ray (const Vector& origin, const Vector& direction) :
-        origin(origin + direction * 1e-5),
-        direction(direction)
+class Material {
+    Shape* shape;
+    Vector cd;
+    double ka, kd, ks;
+    int eta;
+
+public:
+    Material (Shape* shape, const Vector& cd, double kd, double ks, double ka, int eta) :
+        shape(shape), cd(cd), kd(kd), ks(ks), ka(ka), eta(eta)
     {}
 
-    Vector at (double t) const {
-        return origin + direction*t;
+    Shape* getShape () {
+        return shape;
     }
+
+    Vector shade (const Vector &p, const Vector &v);
 };
+
+std::vector<Material> objects;
+
+Material* nearest (const Ray& ray, double& t_min) {
+    Material* hit = nullptr;
+    for (Material& object : objects) {
+        double t;
+        if (object.getShape()->intersect(ray, t) && (!hit || t < t_min)) {
+            t_min = t;
+            hit = &object;
+        }
+    }
+    return hit;
+}
+
+Vector ray_cast (const Ray& ray) {
+    double t_min;
+    Material* hit = nearest(ray, t_min);
+    if (hit) {
+        Vector p = ray.at(t_min);
+        return hit->shade(p, ray.direction*-1);
+    } else {
+        return Vector(3);
+    }
+}
 
 struct Light {
     Vector position, intensity;
@@ -22,56 +52,8 @@ struct Light {
 Vector ambient_light(3);
 std::vector<Light> lights;
 
-struct Shape {
-    Vector cd;
-    double ka, kd, ks;
-    int eta;
-
-    Shape (const Vector &cd, double ka, double kd, double ks, int eta) :
-        cd(cd), ka(ka), kd(kd), ks(ks), eta(eta)
-    {}
-
-    virtual bool intersect (const Ray& ray, double& t) {
-        return {};
-    }
-
-    virtual void applyMatrix (const Matrix& m) {
-        return;
-    }
-
-    virtual Vector normal (const Vector& p) {
-        return {};
-    }
-
-    Vector shade (const Vector &p, const Vector &v, const Vector &n);
-};
-
-std::vector<Shape*> shapes;
-
-Shape* nearest (const Ray& ray, double& t_min) {
-    Shape* hit = nullptr;
-    for (Shape* shape : shapes) {
-        double t;
-        if (shape->intersect(ray, t) && (!hit || t < t_min)) {
-            t_min = t;
-            hit = shape;
-        }
-    }
-    return hit;
-}
-
-Vector ray_cast (const Ray& ray) {
-    double t_min;
-    Shape* hit = nearest(ray, t_min);
-    if (hit) {
-        Vector p = ray.at(t_min);
-        return hit->shade(p, ray.direction*-1, hit->normal(p));
-    } else {
-        return Vector(3);
-    }
-}
-
-Vector Shape::shade (const Vector &p, const Vector &v, const Vector &n) {
+Vector Material::shade (const Vector &p, const Vector &v) {
+    Vector n = shape->normal(p);
     Vector cp = cd*ambient_light*ka;
     for (Light light : lights) {
         Vector l = unit(light.position - p), r = n*2.0*(dot(n, l)) - l;

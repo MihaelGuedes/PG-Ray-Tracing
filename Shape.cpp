@@ -1,16 +1,41 @@
-#include "Render.cpp"
+#include "Matrix.cpp"
 
 const double EPSILON = 1e-9;
 
-struct Sphere : public Shape {
+struct Ray {
+    Vector origin, direction;
+    
+    Ray (const Vector& origin, const Vector& direction) :
+        origin(origin + direction * 1e-5),
+        direction(direction)
+    {}
+
+    Vector at (double t) const {
+        return origin + direction*t;
+    }
+};
+
+class Shape {
+public:
+    virtual bool intersect (const Ray& ray, double& t) {
+        return {};
+    }
+
+    virtual void applyMatrix (const Matrix& m) {
+        return;
+    }
+
+    virtual Vector normal (const Vector& p) {
+        return {};
+    }
+};
+
+class Sphere : public Shape {
     Vector center;
     double radius;
 
-    Sphere (const Vector &cd, double ka, double kd, double ks, int eta, const Vector& center, double radius) :
-        Shape(cd, ka, kd, ks, eta),
-        center(center),
-        radius(radius)
-    {}
+public:
+    Sphere (const Vector& center, double radius) : center(center), radius(radius) {}
 
     bool intersect (const Ray& ray, double& t) {
         Vector v = center - ray.origin;
@@ -41,15 +66,13 @@ struct Sphere : public Shape {
     }
 };
 
-struct Plane : public Shape {
+class Plane : public Shape {
+protected:
     Vector sample;
     Vector n;
 
-    Plane (const Vector &cd, double ka, double kd, double ks, int eta, const Vector& sample, const Vector& normal) :
-        Shape(cd, ka, kd, ks, eta),
-        sample(sample),
-        n(unit(normal))
-    {}
+public:
+    Plane (const Vector& sample, const Vector& normal) : sample(sample), n(unit(normal)) {}
     
     bool intersect (const Ray& ray, double& t) {
         double aux = dot(ray.direction, n);
@@ -71,12 +94,11 @@ struct Plane : public Shape {
     }
 };
 
-struct Triangle : public Plane {
+class Triangle : public Plane {
     Vector hb, hc;
 
-    Triangle(const Vector &cd, double ka, double kd, double ks, int eta, const Vector &a, const Vector &b, const Vector& c) :
-        Plane(cd, ka, kd, ks, eta, a, unit(cross(b - a, c - a)))
-    {
+public:
+    Triangle (const Vector &a, const Vector &b, const Vector& c) : Plane(a, unit(cross(b - a, c - a))) {
         Vector u = b - a, v = c - a;
         Vector projuv = v*(dot(u, v)/dot(v, v));
         Vector projvu = u*(dot(u, v)/dot(u, u));

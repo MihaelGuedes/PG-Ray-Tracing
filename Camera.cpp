@@ -1,4 +1,4 @@
-#include "Shape.cpp"
+#include "Render.cpp"
 #include <iostream>
 
 std::ostream& operator<< (std::ostream& os, Vector& v) {
@@ -6,9 +6,8 @@ std::ostream& operator<< (std::ostream& os, Vector& v) {
     for (int i = 0; i < v.size(); i++) {
         t = std::max(t, v[i]);
     }
+    v = v*255.999/t;
     for (int i = 0; i < v.size(); i++) {
-        v[i] /= t;
-        v[i] *= 255.999;
         os << (char)v[i];
     }
     return os;

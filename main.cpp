@@ -2,7 +2,7 @@
 
 extern Vector ambient_light;
 extern std::vector<Light> lights;
-extern std::vector<Shape*> shapes;
+extern std::vector<Material> objects;
 
 using namespace std;
 
@@ -26,7 +26,7 @@ int main() {
                 int p;
                 cin >> c >> r >> o >> kd >> ks >> ka >> p;
                 o = o/255.0;
-                shapes.push_back(new Sphere(o, ka, kd, ks, p, c, r));
+                objects.emplace_back(new Sphere(c, r), o, kd, ks, ka, p);
                 //shapes.back()->applyMatrix(translate({150.0, 0.0, 0.0}));
             } break;
             case 'p': {
@@ -35,7 +35,7 @@ int main() {
                 int p;
                 cin >> p0 >> n >> o >> kd >> ks >> ka >> p;
                 o = o/255.0;
-                shapes.push_back(new Plane(o, ka, kd, ks, p, p0, n));
+                objects.emplace_back(new Plane(p0, n), o, kd, ks, ka, p);
                 //shapes.back()->applyMatrix(rotateX(30.0, true));
             } break;
             case 't': {
@@ -62,7 +62,7 @@ int main() {
                 cin >> o >> kd >> ks >> ka >> p;
                 o = o/255.0;
                 for (auto [i, j, k] : faces) {
-                    shapes.push_back(new Triangle(o, ka, kd, ks, p, vertices[i], vertices[j], vertices[k]));
+                    objects.emplace_back(new Triangle(vertices[i], vertices[j], vertices[k]), o, kd, ks, ka, p);
                     //shapes.back()->applyMatrix(rotateX(40.0, true));
                 }
                 break;
