@@ -1,7 +1,7 @@
 #include "Camera.cpp"
 
 extern Vector ambient_light;
-extern std::vector<Light> lights;
+extern std::vector<AreaLight> lights;
 extern std::vector<Material> objects;
 
 using namespace std;
@@ -67,12 +67,12 @@ int main() {
                 }
                 break;
             }
-            case 'l': {
-                Light light;
-                cin >> light.position >> light.intensity;
-                light.intensity = light.intensity/255.0;
-                lights.push_back(light);
-            } break;
+            // case 'l': {
+            //     Vector color, corner, uvec, vvec;
+            //     cin >> light.position >> light.intensity;
+            //     light.intensity = light.intensity/255.0;
+            //     lights.push_back(light);
+            // } break;
             case 'a': {
                 cin >> ambient_light;
                 ambient_light = ambient_light/255.0;
@@ -80,6 +80,18 @@ int main() {
         }
         type = -1;
     }
+
+    lights.emplace_back(
+        Vector({1.0, 1.0, 1.0}),
+        Vector({110.0, 110.0, 200.0}),
+        Vector({10.0, 0.0, 0.0}),
+        Vector({0.0, 10.0, 0.0}),
+        8,
+        8
+    );
+    //lights.back().applyMatrix(rotateX(30, true));
+    //lights.back().applyMatrix(translate({100.0, 100.0, 150.0}));
+
     camera->applyMatrix(rotateZ(45, false));
     camera->applyMatrix(rotateX(20, true));
     camera->applyMatrix(rotateZ(45, true));
