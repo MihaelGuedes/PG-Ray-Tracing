@@ -33,12 +33,9 @@ public:
         std::cout << 255 << std::endl;
         for (int i = 0; i < vres; i++) {
             for (int j = 0; j < hres; j++) {
-                if (i == 223 && j == 230) {
-                    std::cout << "here" << std::endl;
-                }
                 Vector pixelCenter = topleft + (u*j - v*i)*square_side;
                 Vector pixelColor = ray_trace(Ray(eye, unit(pixelCenter - eye)), max_depth);
-                std::cout << i << ' ' << j << std::endl;
+                std::cout << pixelColor;
             }
         }
     }
